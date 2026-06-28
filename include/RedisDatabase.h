@@ -6,6 +6,10 @@
 #include <unordered_map>
 #include <vector>
 #include <chrono>
+#if defined(_WIN32) && defined(_MSC_VER)
+#include <BaseTsd.h>
+using ssize_t = SSIZE_T;
+#endif
 
 class RedisDatabase {
 public: 

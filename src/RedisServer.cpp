@@ -3,13 +3,18 @@
 #include "../include/RedisDatabase.h"
 
 #include <iostream>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <netinet/in.h>
 #include <vector>
 #include <thread>
 #include <cstring>
 #include <signal.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#include <sys/socket.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#endif
 
 // Global pointer for signal handling
 static RedisServer* globalServer = nullptr;
@@ -27,6 +32,13 @@ void RedisServer::setupSignalHandler() {
 }
 
 RedisServer::RedisServer(int port) : port(port), server_socket(-1), running(true) {
+#ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        std::cerr << "WSAStartup failed\n";
+        running = false;
+    }
+#endif
     globalServer = this;
     setupSignalHandler();
 }
@@ -39,7 +51,12 @@ void RedisServer::shutdown() {
             std::cout << "Database Dumped to dump.my_rdb\n";
         else 
             std::cerr << "Error dumping database\n";
+#ifdef _WIN32
+        closesocket(server_socket);
+        WSACleanup();
+#else
         close(server_socket);
+#endif
     }
     std::cout << "Server Shutdown Complete!\n";
 }
@@ -52,7 +69,11 @@ void RedisServer::run() {
     }
 
     int opt = 1;
+#ifdef _WIN32
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&opt), sizeof(opt));
+#else
     setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+#endif
 
     sockaddr_in serverAddr{};
     serverAddr.sin_family = AF_INET;
@@ -92,7 +113,11 @@ void RedisServer::run() {
                 std::string response = cmdHandler.processCommand(request);
                 send(client_socket, response.c_str(), response.size(), 0);
             }
+#ifdef _WIN32
+            closesocket(client_socket);
+#else
             close(client_socket);
+#endif
         });
     }
     
