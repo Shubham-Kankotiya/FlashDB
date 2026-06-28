@@ -67,3 +67,9 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Redis CLI
+MyRedisCLI
+
+# Redis Persistence files
+dump.my_rdb
