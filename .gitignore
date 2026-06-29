@@ -73,3 +73,10 @@ MyRedisCLI
 
 # Redis Persistence files
 dump.my_rdb
+
+my_redis_server
+
+test_all.sh
+
+flashdb_benchmark
+flashdb_tests

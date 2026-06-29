@@ -72,7 +72,8 @@ bool RedisDatabase::del(const std::string& key) {
     erased |= kv_store.erase(key) > 0;
     erased |= list_store.erase(key) > 0;
     erased |= hash_store.erase(key) > 0;
-    return false;
+    expiry_map.erase(key);
+    return erased;
 }
 
 bool RedisDatabase::expire(const std::string& key, int seconds) {
